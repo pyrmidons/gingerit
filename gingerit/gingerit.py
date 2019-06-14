@@ -27,29 +27,26 @@ class GingerIt(object):
         return self._process_data(text, data)
 
     @staticmethod
-    def _process_data(text, data):
-        result = ''
-        corrections = []
-        i = 0
+    def change_char(original_text, from_position, to_position, change_with):
+        return original_text[:from_position] + change_with + original_text[to_position + 1:]
 
-        for suggestion in data['Corrections']:
+
+    @staticmethod
+    def _process_data(text, data):
+        result = text
+        corrections = []
+
+        for suggestion in reversed(data['Corrections']):
             start = suggestion["From"]
             end = suggestion["To"]
 
-            if i <= end:
+            if suggestion['Suggestions']:
                 suggest = suggestion['Suggestions'][0]
-                if start != 0:
-                    result += text[i:start-1]
-                result += " " + suggest['Text']
+                result = GingerIt.change_char(result, start, end, suggest['Text'])
 
                 corrections.append({
                     'text': text[start:end],
                     'correct': suggest.get('Text', None),
                     'definition': suggest.get('Definition', None)
                 })
-
-            i = end + 1
-
-        if i < len(text):
-            result += text[i:-1]
         return {'text': text, 'result': result, 'corrections': corrections}
